@@ -5,7 +5,7 @@ GUI for writing and exploring notes.
 Copyright 2017 Joseph Zhu
 """
 
-__version__ = '0.0.1'
+__version__ = '0.1.0'
 
 from PyQt4 import QtGui, QtCore
 from datetime import datetime
@@ -77,17 +77,18 @@ class ZhuNote(QtGui.QMainWindow):
 
     try :
       with open(self.fn_master, 'rb') as f :
-        self.lod = pickle.load(f)
+        self.dod = pickle.load(f)
     except FileNotFoundError :
-      self.lod = []
+      self.dod = {}
       pass
 
   def search(self, string):
     self.tree.clear() # clear tree before a new search
-    self.tree.lod = []
+    self.tree.lod = [] # used in tree class
     # break string to words by space
     words = string.split()
-    for dictNote in self.lod :
+    for key in self.dod :
+      dictNote = self.dod[key]
       keyword = dictNote['Keyword']
       title = dictNote['Title']
       sstring = title + ' ' + keyword # string to be searched
@@ -103,7 +104,7 @@ class ZhuNote(QtGui.QMainWindow):
     In path, each pkl file contains one dictionary.
     This method merges all the dictionaries to a list for search.
     """
-    print('Number of entries old =', len(self.lod))
+    print('Number of entries old =', len(self.dod))
     mt_master = os.path.getmtime(self.fn_master)
 
     for fn in os.listdir(self.path) :
@@ -111,15 +112,19 @@ class ZhuNote(QtGui.QMainWindow):
         ffn = os.path.join(self.path, fn)
         mt_entry = os.path.getmtime(ffn)
         if mt_entry >= mt_master :
-          print("Adding new entry:", ffn)
           with open(ffn, 'rb') as f :
             dictNote = pickle.load(f)
-          self.lod.append(dictNote)
+          title = dictNote['Title']
+          if title in self.dod :
+            print("Modify existing entry:", ffn)
+          else :
+            print("Add new entry:", ffn)
+          self.dod[title] = dictNote
 
     with open(self.fn_master, 'wb') as f :
-      pickle.dump(self.lod, f, -1)
-    print('Merged file is', fn)
-    print('Number of entries new =', len(self.lod))
+      pickle.dump(self.dod, f, -1)
+    print('Merged file is', self.fn_master)
+    print('Number of entries new =', len(self.dod))
 
 class ZhuNoteFind(QtGui.QWidget):
   sigString = QtCore.pyqtSignal(str)
