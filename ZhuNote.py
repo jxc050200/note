@@ -17,16 +17,10 @@ from pathlib import Path
 def main():
   parser = argparse.ArgumentParser()
   parser.add_argument("-p", "--path", type=str, help='path to notes')
-  parser.add_argument("--merge", dest="merge", action="store_true")
-  parser.add_argument("--nomerge", dest="merge", action="store_false")
-  parser.set_defaults(merge=False)
   args = parser.parse_args()
   path = args.path
   if path is None :
     path = os.getcwd()
-  if args.merge :
-    ZhuNote.merge(path)
-    exit()
 
   app = QtGui.QApplication([])
   note = ZhuNote(path)
@@ -55,7 +49,7 @@ class ZhuNote(QtGui.QMainWindow):
 
     self.tree.sigViewItem.connect(self.form.viewDict)
     self.find.sigString.connect(self.search)
-    self.find.sigMasterUpdated.connect(self.loadMaster)
+    self.find.sigUpdateMaster.connect(self.updateMaster)
 
     self.setWindowTitle('Main - ZhuNote')
     self.setGeometry(20, 40, 400, 50)
@@ -79,8 +73,10 @@ class ZhuNote(QtGui.QMainWindow):
   def loadMaster(self):
     fn = 'notemaster.pickle'
     ffn = os.path.join(self.path, fn)
+    self.fn_master = ffn
+
     try :
-      with open(ffn, 'rb') as f :
+      with open(self.fn_master, 'rb') as f :
         self.lod = pickle.load(f)
     except FileNotFoundError :
       self.lod = []
@@ -100,32 +96,34 @@ class ZhuNote(QtGui.QMainWindow):
         self.tree.addItem(dictNote)
     self.tree.sortItems(0, QtCore.Qt.AscendingOrder)
 
-  @staticmethod
-  def merge(path):
+  def updateMaster(self):
     """
-    i path : string, path
+    i self.path : string, path
     o file : write pickle file (list of dictionaries)
     In path, each pkl file contains one dictionary.
     This method merges all the dictionaries to a list for search.
     """
-    lod = []
-    for fn in os.listdir(path) :
+    print('Number of entries old =', len(self.lod))
+    mt_master = os.path.getmtime(self.fn_master)
+
+    for fn in os.listdir(self.path) :
       if fn.endswith(".pkl") :
-        ffn = os.path.join(path, fn)
-        print(ffn)
-        with open(ffn, 'rb') as f :
-          dictNote = pickle.load(f)
-        lod.append(dictNote)
-    print('Number of entries =', len(lod))
-    fn = 'notemaster.pickle'
-    ffn = os.path.join(path, fn)
-    with open(ffn, 'wb') as f :
-      pickle.dump(lod, f, -1)
+        ffn = os.path.join(self.path, fn)
+        mt_entry = os.path.getmtime(ffn)
+        if mt_entry >= mt_master :
+          print("Adding new entry:", ffn)
+          with open(ffn, 'rb') as f :
+            dictNote = pickle.load(f)
+          self.lod.append(dictNote)
+
+    with open(self.fn_master, 'wb') as f :
+      pickle.dump(self.lod, f, -1)
     print('Merged file is', fn)
+    print('Number of entries new =', len(self.lod))
 
 class ZhuNoteFind(QtGui.QWidget):
   sigString = QtCore.pyqtSignal(str)
-  sigMasterUpdated = QtCore.pyqtSignal()
+  sigUpdateMaster = QtCore.pyqtSignal()
 
   def __init__(self, parent=None, path=None):
     QtGui.QWidget.__init__(self, parent)
@@ -137,7 +135,7 @@ class ZhuNoteFind(QtGui.QWidget):
     btnHelp = QtGui.QPushButton('Help')
     btnHelp.clicked.connect(self.showHelp)    
     btnMaster = QtGui.QPushButton('Master')
-    btnMaster.clicked.connect(self.updateMaster)    
+    btnMaster.clicked.connect(self.sigUpdateMaster.emit)
     btnSearch = QtGui.QPushButton('Search')
     btnSearch.clicked.connect(self.send2search)    
 
@@ -155,11 +153,6 @@ class ZhuNoteFind(QtGui.QWidget):
   def send2search(self):
     string = self.txtSearch.text()
     self.sigString.emit(string)
-
-  def updateMaster(self):
-    print('Updating master in', self.path)
-    ZhuNote.merge(self.path)
-    self.sigMasterUpdated.emit()
 
   def showHelp(self):
     strMan = """
