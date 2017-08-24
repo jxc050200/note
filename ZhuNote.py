@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 
 """
-GUI for writing and exploring notes.
-Copyright 2017 Joseph Zhu
+GUI for writing and browsing notes.
 """
 
-__version__ = '0.1.0'
+__version__ = '0.2.0'
 
 from PyQt4 import QtGui, QtCore
 from datetime import datetime
@@ -19,19 +18,20 @@ def main():
   parser.add_argument("-p", "--path", type=str, help='path to notes')
   args = parser.parse_args()
   path = args.path
-  if path is None :
-    path = os.getcwd()
 
   app = QtGui.QApplication([])
-  note = ZhuNote(path)
+  note = ZhuNote(path=path)
   QtGui.QApplication.instance().exec_()
 
-class ZhuNote(QtGui.QMainWindow):
+#class ZhuNote(QtGui.QMainWindow):
+class ZhuNote(QtGui.QWidget):
 
   def __init__(self, path=None):
     QtGui.QMainWindow.__init__(self)
     self.setPath(path)
+    print('Initializing GUI...')
     self.initUi(path)
+    print('Loading database...')
     self.loadMaster()
 
   def setPath(self, path):
@@ -45,19 +45,36 @@ class ZhuNote(QtGui.QMainWindow):
     self.find = ZhuNoteFind(self, path) # self as parent
     self.tree = ZhuNoteTree()
     self.form = ZhuNoteForm(path)
-    self.setCentralWidget(self.find)
+    #self.setCentralWidget(self.find)
+
+    splitter = QtGui.QSplitter(QtCore.Qt.Vertical)
+    splitter.addWidget(self.tree)
+    splitter.addWidget(self.form)
+    splitter.setStretchFactor(0, 1)
+    splitter.setStretchFactor(1, 2)
+
+    vbox = QtGui.QVBoxLayout()
+    vbox.addWidget(self.find)
+    vbox.addWidget(splitter)
+    self.setLayout(vbox)
 
     self.tree.sigViewItem.connect(self.form.viewDict)
     self.find.sigString.connect(self.search)
     self.find.sigUpdateMaster.connect(self.updateMaster)
 
     self.setWindowTitle('Main - ZhuNote')
-    self.setGeometry(20, 40, 400, 50)
-    self.tree.setGeometry(20, 250, 800, 200)
-    self.form.setGeometry(20, 500, 600, 400)
+    x, y, w, h = 20, 40, 600, 1000
+    #self.setGeometry(x, y, w, h)
+    #self.move(x, y)
+    self.resize(w, h)
     self.show()
-    self.tree.show()
-    self.form.show()
+    #self.tree.show()
+    #self.form.show()
+
+    styleName = 'Cleanlooks' # QtGui.QStyleFactory.keys()
+    # ['Windows', 'Motif', 'CDE', 'Plastique', 'GTK+', 'Cleanlooks']
+    QtGui.QApplication.setStyle(QtGui.QStyleFactory.create(
+      styleName))
 
     self.find.txtSearch.setFocus() # not work yet
 
@@ -72,15 +89,13 @@ class ZhuNote(QtGui.QMainWindow):
 
   def loadMaster(self):
     fn = 'notemaster.pickle'
-    ffn = os.path.join(self.path, fn)
-    self.fn_master = ffn
+    self.fn_master = os.path.join(self.path, fn)
 
     try :
       with open(self.fn_master, 'rb') as f :
         self.dod = pickle.load(f)
     except FileNotFoundError :
-      self.dod = {}
-      pass
+      raise ValueError("Not found:", self.fn_master)
 
   def search(self, string):
     self.tree.clear() # clear tree before a new search
