@@ -30,7 +30,8 @@ class ZhuNote(QtGui.QWidget):
     QtGui.QMainWindow.__init__(self)
     self.setPath(path)
     print('Initializing GUI...')
-    self.initUi(path)
+    self.initUi()
+    self.setFont()
     print('Loading database...')
     self.loadMaster()
 
@@ -41,10 +42,10 @@ class ZhuNote(QtGui.QWidget):
       self.path = path
     print('Working directory is', self.path)
 
-  def initUi(self, path):
-    self.find = ZhuNoteFind(self, path) # self as parent
+  def initUi(self):
+    self.find = ZhuNoteFind(self) # self as parent
     self.tree = ZhuNoteTree()
-    self.form = ZhuNoteForm(path)
+    self.form = ZhuNoteForm(self.path)
     #self.setCentralWidget(self.find)
 
     splitter = QtGui.QSplitter(QtCore.Qt.Vertical)
@@ -59,11 +60,13 @@ class ZhuNote(QtGui.QWidget):
     self.setLayout(vbox)
 
     self.tree.sigViewItem.connect(self.form.viewDict)
+    self.find.sigClear.connect(self.clear)
     self.find.sigString.connect(self.search)
     self.find.sigUpdateMaster.connect(self.updateMaster)
+    self.find.sigFont.connect(self.setFont)
 
     self.setWindowTitle('Main - ZhuNote')
-    x, y, w, h = 20, 40, 600, 1000
+    x, y, w, h = 20, 40, 1000, 1000
     #self.setGeometry(x, y, w, h)
     #self.move(x, y)
     self.resize(w, h)
@@ -83,6 +86,15 @@ class ZhuNote(QtGui.QWidget):
     self.actExit.triggered.connect(self.closeAllWindows)    
     self.addAction(self.actExit)
 
+  def setFont(self, font=None):
+    if font is None :
+      font = QtGui.QFont() # default font
+      font.setFamily('Courier New')
+      font.setPointSize(11)
+    self.find.txtSearch.setFont(font)
+    self.tree.setFont(font)
+    self.form.setFont(font)
+
   def closeAllWindows(self):
     app = QtGui.QApplication.instance()
     app.closeAllWindows()
@@ -97,16 +109,23 @@ class ZhuNote(QtGui.QWidget):
     except FileNotFoundError :
       raise ValueError("Not found:", self.fn_master)
 
+  def clear(self):
+    self.find.txtSearch.clear()
+    self.tree.clear()
+    self.form.clear()
+
   def search(self, string):
     self.tree.clear() # clear tree before a new search
     self.tree.lod = [] # used in tree class
     # break string to words by space
-    words = string.split()
+    stringLC = string.lower()
+    words = stringLC.split()
     for key in self.dod :
       dictNote = self.dod[key]
       keyword = dictNote['Keyword']
       title = dictNote['Title']
       sstring = title + ' ' + keyword # string to be searched
+      sstring = sstring.lower()
       if any(word in sstring for word in words): # weak search
       #if all(word in kw for word in words): # strong search
         self.tree.addItem(dictNote)
@@ -143,17 +162,22 @@ class ZhuNote(QtGui.QWidget):
 
 class ZhuNoteFind(QtGui.QWidget):
   sigString = QtCore.pyqtSignal(str)
+  sigClear = QtCore.pyqtSignal()
   sigUpdateMaster = QtCore.pyqtSignal()
+  sigFont = QtCore.pyqtSignal(object)
 
-  def __init__(self, parent=None, path=None):
+  def __init__(self, parent=None):
     QtGui.QWidget.__init__(self, parent)
-    self.path = path # for the button update master
 
     lblSearch = QtGui.QLabel('ZhuNote')
     self.txtSearch = QtGui.QLineEdit(self)
     self.txtSearch.returnPressed.connect(self.send2search)
     btnHelp = QtGui.QPushButton('Help')
     btnHelp.clicked.connect(self.showHelp)    
+    btnFont = QtGui.QPushButton('Font')
+    btnFont.clicked.connect(self.fontPicker)
+    btnClear = QtGui.QPushButton('Clear')
+    btnClear.clicked.connect(self.send2clear)
     btnMaster = QtGui.QPushButton('Master')
     btnMaster.clicked.connect(self.sigUpdateMaster.emit)
     btnSearch = QtGui.QPushButton('Search')
@@ -161,6 +185,8 @@ class ZhuNoteFind(QtGui.QWidget):
 
     hbox = QtGui.QHBoxLayout()
     hbox.addWidget(btnHelp)
+    hbox.addWidget(btnFont)
+    hbox.addWidget(btnClear)
     hbox.addWidget(btnMaster)
     hbox.addWidget(btnSearch)
 
@@ -170,9 +196,17 @@ class ZhuNoteFind(QtGui.QWidget):
     vbox.addLayout(hbox)
     self.setLayout(vbox)
 
+  def fontPicker(self):
+    font, valid = QtGui.QFontDialog.getFont()
+    if valid:
+      self.sigFont.emit(font)
+
   def send2search(self):
     string = self.txtSearch.text()
     self.sigString.emit(string)
+
+  def send2clear(self):
+    self.sigClear.emit()
 
   def showHelp(self):
     strMan = """
@@ -238,6 +272,7 @@ class ZhuNoteTree(QtGui.QTreeWidget):
     #self.show()
     self.currentItemChanged.connect(self.send2view)
     self.lod = []
+    self.font = QtGui.QFont()
   def send2view(self):
     item = self.currentItem()
     if item is not None :
@@ -248,7 +283,18 @@ class ZhuNoteTree(QtGui.QTreeWidget):
     item = QtGui.QTreeWidgetItem(self)
     item.setText(0, dictNote['Title'])
     item.setText(1, dictNote['Keyword'])
+    item.setFont(0, self.font)
+    item.setFont(1, self.font)
     self.lod.append(dictNote)
+  def setFont(self, font):
+    self.font = font # for future use
+    # set the current tree items
+    iterator = QtGui.QTreeWidgetItemIterator(self)
+    while iterator.value() :
+      item = iterator.value()
+      item.setFont(0, self.font)
+      item.setFont(1, self.font)
+      iterator += 1
 
 class ZhuNoteForm(QtGui.QWidget):
   def __init__(self, path=None):
@@ -266,6 +312,7 @@ class ZhuNoteForm(QtGui.QWidget):
     bodyLabel = QtGui.QLabel('Body')
 
     self.pathEdit = QtGui.QLineEdit(path)
+    self.pathEdit.setReadOnly(True)
     self.filenameEdit = QtGui.QLineEdit()
     self.timeEdit = QtGui.QLineEdit()
     self.titleEdit = QtGui.QLineEdit()
@@ -274,10 +321,6 @@ class ZhuNoteForm(QtGui.QWidget):
     self.htmlEdit = QtGui.QLineEdit()
     self.bodyEdit = QtGui.QTextEdit()
 
-    font = self.bodyEdit.font()
-    font.setPointSize(12)
-    self.bodyEdit.setFont(font)
-    
     # If more than one keyword, delimit with comma.
     # Same for figure and html filenames.
 
@@ -330,6 +373,27 @@ class ZhuNoteForm(QtGui.QWidget):
     #self.setGeometry(300, 300, 600, 400)
     self.setWindowTitle('Form - ZhuNote')
     #self.show()
+
+  def setFont(self, font):
+    #font = self.bodyEdit.font() # current font
+    #font = QtGui.QFont() # default font
+    self.pathEdit.setFont(font)
+    self.filenameEdit.setFont(font)
+    self.timeEdit.setFont(font)
+    self.titleEdit.setFont(font)
+    self.keywordEdit.setFont(font)
+    self.figureEdit.setFont(font)
+    self.htmlEdit.setFont(font)
+    self.bodyEdit.setFont(font)
+
+  def clear(self):
+    self.filenameEdit.clear()
+    self.timeEdit.clear()
+    self.titleEdit.clear()
+    self.keywordEdit.clear()
+    self.figureEdit.clear()
+    self.htmlEdit.clear()
+    self.bodyEdit.clear()
 
   def viewDict(self, dictNote):
     self.show()
