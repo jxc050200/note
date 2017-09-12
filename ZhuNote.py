@@ -7,6 +7,7 @@ GUI for writing and browsing notes.
 __version__ = '0.2.0'
 
 from PyQt4 import QtGui, QtCore
+from PyQt4.QtWebKit import QWebView
 from datetime import datetime
 import pickle
 import os
@@ -23,7 +24,6 @@ def main():
   note = ZhuNote(path=path)
   QtGui.QApplication.instance().exec_()
 
-#class ZhuNote(QtGui.QMainWindow):
 class ZhuNote(QtGui.QWidget):
 
   def __init__(self, path=None):
@@ -43,14 +43,21 @@ class ZhuNote(QtGui.QWidget):
     print('Working directory is', self.path)
 
   def initUi(self):
+    x, y, w, h = 20, 40, 1000, 1000
+
     self.find = ZhuNoteFind(self) # self as parent
     self.tree = ZhuNoteTree()
     self.form = ZhuNoteForm(self.path)
-    #self.setCentralWidget(self.find)
+    self.wbrs = QWebView()
+
+    splitter1 = QtGui.QSplitter(QtCore.Qt.Horizontal)
+    splitter1.addWidget(self.form)
+    splitter1.addWidget(self.wbrs)
+    splitter1.setSizes([w/2, w/2])
 
     splitter = QtGui.QSplitter(QtCore.Qt.Vertical)
     splitter.addWidget(self.tree)
-    splitter.addWidget(self.form)
+    splitter.addWidget(splitter1)
     splitter.setStretchFactor(0, 1)
     splitter.setStretchFactor(1, 2)
 
@@ -59,14 +66,17 @@ class ZhuNote(QtGui.QWidget):
     vbox.addWidget(splitter)
     self.setLayout(vbox)
 
+    html = '<html> <body> <p> HTML Viewer </p> </body> </html>'
+    self.wbrs.setHtml(html)
+
     self.tree.sigViewItem.connect(self.form.viewDict)
+    self.tree.sigViewItem.connect(self.viewHtml)
     self.find.sigClear.connect(self.clear)
     self.find.sigString.connect(self.search)
     self.find.sigUpdateMaster.connect(self.updateMaster)
     self.find.sigFont.connect(self.setFont)
 
     self.setWindowTitle('Main - ZhuNote')
-    x, y, w, h = 20, 40, 1000, 1000
     #self.setGeometry(x, y, w, h)
     #self.move(x, y)
     self.resize(w, h)
@@ -85,6 +95,17 @@ class ZhuNote(QtGui.QWidget):
     self.actExit.setShortcut('Ctrl+Q')
     self.actExit.triggered.connect(self.closeAllWindows)    
     self.addAction(self.actExit)
+
+  def viewHtml(self, dictNote):
+    htmlfn = dictNote['HTML']
+    fn = os.path.join(self.path, htmlfn)
+    if Path(fn).is_file() :
+      url = QtCore.QUrl.fromLocalFile(fn)
+      self.wbrs.load(url)
+    else :
+      #self.wbrs.setHtml('') # blank page
+      html = '<html> <body> <p> No HTML </p> </body> </html>'
+      self.wbrs.setHtml(html)
 
   def setFont(self, font=None):
     if font is None :
@@ -396,7 +417,6 @@ class ZhuNoteForm(QtGui.QWidget):
     self.bodyEdit.clear()
 
   def viewDict(self, dictNote):
-    self.show()
     self.filenameEdit.setText(dictNote['Filename'])
     self.timeEdit.setText(dictNote['Time'])
     self.titleEdit.setText(dictNote['Title'])
