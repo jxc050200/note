@@ -25,6 +25,8 @@ def main():
   QtGui.QApplication.instance().exec_()
 
 class ZhuNote(QtGui.QWidget):
+  html_hi = '<html> <body> <p> HTML Viewer </p> </body> </html>'
+  html_no = '<html> <body> <p> No HTML </p> </body> </html>'
 
   def __init__(self, path=None):
     QtGui.QMainWindow.__init__(self)
@@ -66,8 +68,7 @@ class ZhuNote(QtGui.QWidget):
     vbox.addWidget(splitter)
     self.setLayout(vbox)
 
-    html = '<html> <body> <p> HTML Viewer </p> </body> </html>'
-    self.wbrs.setHtml(html)
+    self.wbrs.setHtml(self.html_hi)
 
     self.tree.sigViewItem.connect(self.form.viewDict)
     self.tree.sigViewItem.connect(self.viewHtml)
@@ -104,8 +105,7 @@ class ZhuNote(QtGui.QWidget):
       self.wbrs.load(url)
     else :
       #self.wbrs.setHtml('') # blank page
-      html = '<html> <body> <p> No HTML </p> </body> </html>'
-      self.wbrs.setHtml(html)
+      self.wbrs.setHtml(self.html_no)
 
   def setFont(self, font=None):
     if font is None :
@@ -134,6 +134,7 @@ class ZhuNote(QtGui.QWidget):
     self.find.txtSearch.clear()
     self.tree.clear()
     self.form.clear()
+    self.wbrs.setHtml(self.html_hi)
 
   def search(self, string):
     self.tree.clear() # clear tree before a new search
@@ -493,7 +494,7 @@ class ZhuNoteForm(QtGui.QWidget):
   @staticmethod
   def writeFile(textSum, txtfn, dictNote, pklfn):
     """ input are full filename (with absolute path) """
-    with open(txtfn, 'w') as f :
+    with open(txtfn, 'w', encoding='utf-8') as f :
       f.write(textSum)
     with open(pklfn, 'wb') as f :
       pickle.dump(dictNote, f, -1)
