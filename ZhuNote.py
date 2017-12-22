@@ -168,6 +168,7 @@ class ZhuNote(QtGui.QWidget):
         ffn = os.path.join(self.path, fn)
         mt_entry = os.path.getmtime(ffn)
         if mt_entry >= mt_master :
+#        if True:
           with open(ffn, 'rb') as f :
             dictNote = pickle.load(f)
           title = dictNote['Title']
