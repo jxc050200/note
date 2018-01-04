@@ -94,7 +94,7 @@ class ZhuNote(QtGui.QWidget):
 
     self.actExit = QtGui.QAction('Exit', self)
     self.actExit.setShortcut('Ctrl+Q')
-    self.actExit.triggered.connect(self.closeAllWindows)    
+    self.actExit.triggered.connect(self.closeAllWindows)
     self.addAction(self.actExit)
 
   def viewHtml(self, dictNote):
@@ -196,7 +196,7 @@ class ZhuNoteFind(QtGui.QWidget):
     self.txtSearch = QtGui.QLineEdit(self)
     self.txtSearch.returnPressed.connect(self.send2search)
     btnHelp = QtGui.QPushButton('Help')
-    btnHelp.clicked.connect(self.showHelp)    
+    btnHelp.clicked.connect(self.showHelp)
     btnFont = QtGui.QPushButton('Font')
     btnFont.clicked.connect(self.fontPicker)
     btnClear = QtGui.QPushButton('Clear')
@@ -204,7 +204,7 @@ class ZhuNoteFind(QtGui.QWidget):
     btnMaster = QtGui.QPushButton('Master')
     btnMaster.clicked.connect(self.sigUpdateMaster.emit)
     btnSearch = QtGui.QPushButton('Search')
-    btnSearch.clicked.connect(self.send2search)    
+    btnSearch.clicked.connect(self.send2search)
 
     hbox = QtGui.QHBoxLayout()
     hbox.addWidget(btnHelp)
@@ -349,13 +349,13 @@ class ZhuNoteForm(QtGui.QWidget):
 
     #btnSave = QtGui.QPushButton('Save')
     #btnSave.setToolTip('Save script to file')
-    #btnSave.clicked.connect(self.saveFile)    
+    #btnSave.clicked.connect(self.saveFile)
     # Replace save button with keyboard shortcut
     # Save move hand from keyboard to mouse.
 
     grid = QtGui.QGridLayout()
     grid.setSpacing(5)
-    
+
     row = 0
     grid.addWidget(pathLabel, row, 0)
     grid.addWidget(self.pathEdit, row, 1)
