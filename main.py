@@ -17,7 +17,6 @@ from datetime import datetime
 import pickle
 import os
 import argparse
-from pathlib import Path
 
 
 class ZhuNote(QWidget):
@@ -27,10 +26,8 @@ class ZhuNote(QWidget):
     def __init__(self, path=None):
         QWidget.__init__(self)
         self.setPath(path)
-        print('Initializing GUI...')
         self.initUi()
         self.setFont()
-        print('Loading database...')
         self.loadMaster()
 
     def setPath(self, path):
@@ -38,9 +35,10 @@ class ZhuNote(QWidget):
             self.path = os.getcwd()
         else :
             self.path = path
-        print('Working directory is', self.path)
+        print('Working directory:', self.path)
 
     def initUi(self):
+        print('Initializing GUI...')
         w, h = 1000, 1000
 
         self.find = ZhuNoteFind(self) # self as parent
@@ -96,7 +94,7 @@ class ZhuNote(QWidget):
     def viewHtml(self, dictNote):
         htmlfn = dictNote['HTML']
         fn = os.path.join(self.path, htmlfn)
-        if Path(fn).is_file() :
+        if os.path.isfile(fn):
             url = QUrl.fromLocalFile(fn)
             self.wbrs.load(url)
         else :
@@ -118,13 +116,11 @@ class ZhuNote(QWidget):
 
     def loadMaster(self):
         fn = 'notemaster.pickle'
-        self.fn_master = os.path.join(self.path, fn)
-
-        try :
-            with open(self.fn_master, 'rb') as f :
+        self.masterfn = os.path.join(self.path, fn)
+        if os.path.isfile(self.masterfn):
+            print('Loading database:', self.masterfn)
+            with open(self.masterfn, 'rb') as f :
                 self.dod = pickle.load(f)
-        except FileNotFoundError :
-            raise ValueError("Not found:", self.fn_master)
 
     def clear(self):
         self.find.txtSearch.clear()
@@ -157,7 +153,7 @@ class ZhuNote(QWidget):
         This method merges all the dictionaries to a list for search.
         """
         print('Number of entries old =', len(self.dod))
-        mt_master = os.path.getmtime(self.fn_master)
+        mt_master = os.path.getmtime(self.masterfn)
 
         for fn in os.listdir(self.path) :
             if fn.endswith(".pkl") :
@@ -174,9 +170,9 @@ class ZhuNote(QWidget):
                         print("Add new entry:", ffn)
                     self.dod[title] = dictNote
 
-        with open(self.fn_master, 'wb') as f :
+        with open(self.masterfn, 'wb') as f :
             pickle.dump(self.dod, f, -1)
-        print('Merged file is', self.fn_master)
+        print('Merged file is', self.masterfn)
         print('Number of entries new =', len(self.dod))
 
 
@@ -478,8 +474,7 @@ class ZhuNoteForm(QWidget):
         pklffn = os.path.join(path, pklfn)
 
         # Check if file exist
-        myfile = Path(txtffn)
-        if myfile.is_file() : # file exists
+        if os.path.isfile(txtffn):
             choice = QMessageBox.question(self, 'Warning',
             "File exists. Do you want overwrite?", QMessageBox.Yes |
             QMessageBox.No, QMessageBox.Yes)
