@@ -6,8 +6,14 @@ GUI for writing and browsing notes.
 
 __version__ = '0.2.0'
 
-from PyQt4 import QtGui, QtCore
-from PyQt4.QtWebKit import QWebView
+#from PyQt5.QtWebKitWidgets import QWebView
+from PyQt5.QtWebEngineWidgets import QWebEngineView
+from PyQt5.QtCore import Qt, QUrl, pyqtSignal
+from PyQt5.QtGui import QFont
+from PyQt5.QtWidgets import (QWidget, QMessageBox, QTreeWidget, QApplication,
+    QSplitter, QVBoxLayout, QStyleFactory, QAction, QLabel,
+    QLineEdit, QPushButton, QHBoxLayout, QFontDialog, QSizePolicy, QTextEdit,
+    QTreeWidgetItem, QTreeWidgetItemIterator, QGridLayout)
 from datetime import datetime
 import pickle
 import os
@@ -20,16 +26,16 @@ def main():
   args = parser.parse_args()
   path = args.path
 
-  app = QtGui.QApplication([])
+  app = QApplication([])
   note = ZhuNote(path=path)
-  QtGui.QApplication.instance().exec_()
+  QApplication.instance().exec_()
 
-class ZhuNote(QtGui.QWidget):
+class ZhuNote(QWidget):
   html_hi = '<html> <body> <p> HTML Viewer </p> </body> </html>'
   html_no = '<html> <body> <p> No HTML </p> </body> </html>'
 
   def __init__(self, path=None):
-    QtGui.QMainWindow.__init__(self)
+    QWidget.__init__(self)
     self.setPath(path)
     print('Initializing GUI...')
     self.initUi()
@@ -50,20 +56,20 @@ class ZhuNote(QtGui.QWidget):
     self.find = ZhuNoteFind(self) # self as parent
     self.tree = ZhuNoteTree()
     self.form = ZhuNoteForm(self.path)
-    self.wbrs = QWebView()
+    self.wbrs = QWebEngineView()
 
-    splitter1 = QtGui.QSplitter(QtCore.Qt.Horizontal)
+    splitter1 = QSplitter(Qt.Horizontal)
     splitter1.addWidget(self.form)
     splitter1.addWidget(self.wbrs)
     splitter1.setSizes([w/2, w/2])
 
-    splitter = QtGui.QSplitter(QtCore.Qt.Vertical)
+    splitter = QSplitter(Qt.Vertical)
     splitter.addWidget(self.tree)
     splitter.addWidget(splitter1)
     splitter.setStretchFactor(0, 1)
     splitter.setStretchFactor(1, 2)
 
-    vbox = QtGui.QVBoxLayout()
+    vbox = QVBoxLayout()
     vbox.addWidget(self.find)
     vbox.addWidget(splitter)
     self.setLayout(vbox)
@@ -85,14 +91,14 @@ class ZhuNote(QtGui.QWidget):
     #self.tree.show()
     #self.form.show()
 
-    styleName = 'Cleanlooks' # QtGui.QStyleFactory.keys()
+    styleName = 'Cleanlooks' # QStyleFactory.keys()
     # ['Windows', 'Motif', 'CDE', 'Plastique', 'GTK+', 'Cleanlooks']
-    QtGui.QApplication.setStyle(QtGui.QStyleFactory.create(
+    QApplication.setStyle(QStyleFactory.create(
       styleName))
 
     self.find.txtSearch.setFocus() # not work yet
 
-    self.actExit = QtGui.QAction('Exit', self)
+    self.actExit = QAction('Exit', self)
     self.actExit.setShortcut('Ctrl+Q')
     self.actExit.triggered.connect(self.closeAllWindows)
     self.addAction(self.actExit)
@@ -101,7 +107,7 @@ class ZhuNote(QtGui.QWidget):
     htmlfn = dictNote['HTML']
     fn = os.path.join(self.path, htmlfn)
     if Path(fn).is_file() :
-      url = QtCore.QUrl.fromLocalFile(fn)
+      url = QUrl.fromLocalFile(fn)
       self.wbrs.load(url)
     else :
       #self.wbrs.setHtml('') # blank page
@@ -109,7 +115,7 @@ class ZhuNote(QtGui.QWidget):
 
   def setFont(self, font=None):
     if font is None :
-      font = QtGui.QFont() # default font
+      font = QFont() # default font
       font.setFamily('Courier New')
       font.setPointSize(11)
     self.find.txtSearch.setFont(font)
@@ -117,7 +123,7 @@ class ZhuNote(QtGui.QWidget):
     self.form.setFont(font)
 
   def closeAllWindows(self):
-    app = QtGui.QApplication.instance()
+    app = QApplication.instance()
     app.closeAllWindows()
 
   def loadMaster(self):
@@ -151,7 +157,7 @@ class ZhuNote(QtGui.QWidget):
       if any(word in sstring for word in words): # weak search
       #if all(word in kw for word in words): # strong search
         self.tree.addItem(dictNote)
-    self.tree.sortItems(0, QtCore.Qt.AscendingOrder)
+    self.tree.sortItems(0, Qt.AscendingOrder)
 
   def updateMaster(self):
     """
@@ -183,44 +189,44 @@ class ZhuNote(QtGui.QWidget):
     print('Merged file is', self.fn_master)
     print('Number of entries new =', len(self.dod))
 
-class ZhuNoteFind(QtGui.QWidget):
-  sigString = QtCore.pyqtSignal(str)
-  sigClear = QtCore.pyqtSignal()
-  sigUpdateMaster = QtCore.pyqtSignal()
-  sigFont = QtCore.pyqtSignal(object)
+class ZhuNoteFind(QWidget):
+  sigString = pyqtSignal(str)
+  sigClear = pyqtSignal()
+  sigUpdateMaster = pyqtSignal()
+  sigFont = pyqtSignal(object)
 
   def __init__(self, parent=None):
-    QtGui.QWidget.__init__(self, parent)
+    QWidget.__init__(self, parent)
 
-    lblSearch = QtGui.QLabel('ZhuNote')
-    self.txtSearch = QtGui.QLineEdit(self)
+    lblSearch = QLabel('ZhuNote')
+    self.txtSearch = QLineEdit(self)
     self.txtSearch.returnPressed.connect(self.send2search)
-    btnHelp = QtGui.QPushButton('Help')
+    btnHelp = QPushButton('Help')
     btnHelp.clicked.connect(self.showHelp)
-    btnFont = QtGui.QPushButton('Font')
+    btnFont = QPushButton('Font')
     btnFont.clicked.connect(self.fontPicker)
-    btnClear = QtGui.QPushButton('Clear')
+    btnClear = QPushButton('Clear')
     btnClear.clicked.connect(self.send2clear)
-    btnMaster = QtGui.QPushButton('Master')
+    btnMaster = QPushButton('Master')
     btnMaster.clicked.connect(self.sigUpdateMaster.emit)
-    btnSearch = QtGui.QPushButton('Search')
+    btnSearch = QPushButton('Search')
     btnSearch.clicked.connect(self.send2search)
 
-    hbox = QtGui.QHBoxLayout()
+    hbox = QHBoxLayout()
     hbox.addWidget(btnHelp)
     hbox.addWidget(btnFont)
     hbox.addWidget(btnClear)
     hbox.addWidget(btnMaster)
     hbox.addWidget(btnSearch)
 
-    vbox = QtGui.QVBoxLayout()
+    vbox = QVBoxLayout()
     vbox.addWidget(lblSearch)
     vbox.addWidget(self.txtSearch)
     vbox.addLayout(hbox)
     self.setLayout(vbox)
 
   def fontPicker(self):
-    font, valid = QtGui.QFontDialog.getFont()
+    font, valid = QFontDialog.getFont()
     if valid:
       self.sigFont.emit(font)
 
@@ -249,44 +255,44 @@ class ZhuNoteFind(QtGui.QWidget):
     To close all windows:
     Focus at Main window, Ctrl+Q.
     """
-    #msg = QtGui.QMessageBox() # cannot resize
+    #msg = QMessageBox() # cannot resize
     msg = ZhuMessageBox()
     msg.setText("This is a message box")
     msg.setInformativeText("This is additional information")
     msg.setWindowTitle("Help - ZhuNote")
     msg.setDetailedText(strMan)
-    msg.setStandardButtons(QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel)
+    msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
     msg.exec_()
 
-class ZhuMessageBox(QtGui.QMessageBox):
+class ZhuMessageBox(QMessageBox):
   """Extend QMessageBox to allow resize """
   def __init__(self):
-    QtGui.QMessageBox.__init__(self)
+    QMessageBox.__init__(self)
     self.setSizeGripEnabled(True)
 
   def event(self, e):
-    result = QtGui.QMessageBox.event(self, e)
+    result = QMessageBox.event(self, e)
 
     self.setMinimumHeight(0)
     self.setMaximumHeight(16777215)
     self.setMinimumWidth(0)
     self.setMaximumWidth(16777215)
-    self.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+    self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
-    textEdit = self.findChild(QtGui.QTextEdit)
+    textEdit = self.findChild(QTextEdit)
     if textEdit != None :
       textEdit.setMinimumHeight(0)
       textEdit.setMaximumHeight(16777215)
       textEdit.setMinimumWidth(0)
       textEdit.setMaximumWidth(16777215)
-      textEdit.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+      textEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
     return result
 
-class ZhuNoteTree(QtGui.QTreeWidget):
-  sigViewItem = QtCore.pyqtSignal(object)
+class ZhuNoteTree(QTreeWidget):
+  sigViewItem = pyqtSignal(object)
   def __init__(self):
-    QtGui.QWidget.__init__(self)
+    QTreeWidget.__init__(self)
     self.setColumnCount(2)
     self.setHeaderLabels(("Title", "Keyword"))
     #self.setGeometry(0, 0, 800, 300)
@@ -295,7 +301,7 @@ class ZhuNoteTree(QtGui.QTreeWidget):
     #self.show()
     self.currentItemChanged.connect(self.send2view)
     self.lod = []
-    self.font = QtGui.QFont()
+    self.font = QFont()
   def send2view(self):
     item = self.currentItem()
     if item is not None :
@@ -303,7 +309,7 @@ class ZhuNoteTree(QtGui.QTreeWidget):
       result = [note for note in self.lod if note['Title'] == title]
       self.sigViewItem.emit(result[0]) # send one dictionary
   def addItem(self, dictNote):
-    item = QtGui.QTreeWidgetItem(self)
+    item = QTreeWidgetItem(self)
     item.setText(0, dictNote['Title'])
     item.setText(1, dictNote['Keyword'])
     item.setFont(0, self.font)
@@ -312,48 +318,48 @@ class ZhuNoteTree(QtGui.QTreeWidget):
   def setFont(self, font):
     self.font = font # for future use
     # set the current tree items
-    iterator = QtGui.QTreeWidgetItemIterator(self)
+    iterator = QTreeWidgetItemIterator(self)
     while iterator.value() :
       item = iterator.value()
       item.setFont(0, self.font)
       item.setFont(1, self.font)
       iterator += 1
 
-class ZhuNoteForm(QtGui.QWidget):
+class ZhuNoteForm(QWidget):
   def __init__(self, path=None):
-    QtGui.QWidget.__init__(self)
+    QWidget.__init__(self)
     self.initUI(path)
 
   def initUI(self, path):
-    pathLabel = QtGui.QLabel('Path')
-    filenameLabel = QtGui.QLabel('Filename')
-    timeLabel = QtGui.QLabel('Time')
-    titleLabel = QtGui.QLabel('Title')
-    keywordLabel = QtGui.QLabel('Keyword')
-    figureLabel = QtGui.QLabel('Figure')
-    htmlLabel = QtGui.QLabel('HTML')
-    bodyLabel = QtGui.QLabel('Body')
+    pathLabel = QLabel('Path')
+    filenameLabel = QLabel('Filename')
+    timeLabel = QLabel('Time')
+    titleLabel = QLabel('Title')
+    keywordLabel = QLabel('Keyword')
+    figureLabel = QLabel('Figure')
+    htmlLabel = QLabel('HTML')
+    bodyLabel = QLabel('Body')
 
-    self.pathEdit = QtGui.QLineEdit(path)
+    self.pathEdit = QLineEdit(path)
     self.pathEdit.setReadOnly(True)
-    self.filenameEdit = QtGui.QLineEdit()
-    self.timeEdit = QtGui.QLineEdit()
-    self.titleEdit = QtGui.QLineEdit()
-    self.keywordEdit = QtGui.QLineEdit()
-    self.figureEdit = QtGui.QLineEdit()
-    self.htmlEdit = QtGui.QLineEdit()
-    self.bodyEdit = QtGui.QTextEdit()
+    self.filenameEdit = QLineEdit()
+    self.timeEdit = QLineEdit()
+    self.titleEdit = QLineEdit()
+    self.keywordEdit = QLineEdit()
+    self.figureEdit = QLineEdit()
+    self.htmlEdit = QLineEdit()
+    self.bodyEdit = QTextEdit()
 
     # If more than one keyword, delimit with comma.
     # Same for figure and html filenames.
 
-    #btnSave = QtGui.QPushButton('Save')
+    #btnSave = QPushButton('Save')
     #btnSave.setToolTip('Save script to file')
     #btnSave.clicked.connect(self.saveFile)
     # Replace save button with keyboard shortcut
     # Save move hand from keyboard to mouse.
 
-    grid = QtGui.QGridLayout()
+    grid = QGridLayout()
     grid.setSpacing(5)
 
     row = 0
@@ -382,12 +388,12 @@ class ZhuNoteForm(QtGui.QWidget):
     grid.addWidget(self.bodyEdit, row, 1, 6, 1)
     #grid.addWidget(btnSave, 11, 1)
 
-    self.actOpen = QtGui.QAction('Open', self)
+    self.actOpen = QAction('Open', self)
     self.actOpen.setShortcut('Ctrl+O')
     self.actOpen.triggered.connect(self.openFile)
     self.filenameEdit.addAction(self.actOpen)
 
-    self.actSave = QtGui.QAction('Save', self)
+    self.actSave = QAction('Save', self)
     self.actSave.setShortcut('Ctrl+S')
     self.actSave.triggered.connect(self.saveFile)
     self.bodyEdit.addAction(self.actSave)
@@ -399,7 +405,7 @@ class ZhuNoteForm(QtGui.QWidget):
 
   def setFont(self, font):
     #font = self.bodyEdit.font() # current font
-    #font = QtGui.QFont() # default font
+    #font = QFont() # default font
     self.pathEdit.setFont(font)
     self.filenameEdit.setFont(font)
     self.timeEdit.setFont(font)
@@ -480,10 +486,10 @@ class ZhuNoteForm(QtGui.QWidget):
     # Check if file exist
     myfile = Path(txtffn)
     if myfile.is_file() : # file exists
-      choice = QtGui.QMessageBox.question(self, 'Warning',
-      "File exists. Do you want overwrite?", QtGui.QMessageBox.Yes |
-      QtGui.QMessageBox.No, QtGui.QMessageBox.Yes)
-      if choice == QtGui.QMessageBox.Yes :
+      choice = QMessageBox.question(self, 'Warning',
+      "File exists. Do you want overwrite?", QMessageBox.Yes |
+      QMessageBox.No, QMessageBox.Yes)
+      if choice == QMessageBox.Yes :
         self.writeFile(textSum, txtffn, dictNote, pklffn)
       else :
         print("Change title and re-save.")
