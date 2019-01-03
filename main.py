@@ -6,11 +6,10 @@ GUI for writing and browsing notes.
 
 __version__ = '0.2.0'
 
-#from PyQt5.QtWebKitWidgets import QWebView
-from PyQt5.QtWebEngineWidgets import QWebEngineView
-from PyQt5.QtCore import Qt, QUrl, pyqtSignal
-from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import (QWidget, QMessageBox, QTreeWidget, QApplication,
+from qtpy.QtWebEngineWidgets import QWebEngineView
+from qtpy.QtCore import Qt, QUrl, Signal
+from qtpy.QtGui import QFont
+from qtpy.QtWidgets import (QWidget, QMessageBox, QTreeWidget, QApplication,
     QSplitter, QVBoxLayout, QStyleFactory, QAction, QLabel,
     QLineEdit, QPushButton, QHBoxLayout, QFontDialog, QSizePolicy, QTextEdit,
     QTreeWidgetItem, QTreeWidgetItemIterator, QGridLayout)
@@ -190,10 +189,10 @@ class ZhuNote(QWidget):
     print('Number of entries new =', len(self.dod))
 
 class ZhuNoteFind(QWidget):
-  sigString = pyqtSignal(str)
-  sigClear = pyqtSignal()
-  sigUpdateMaster = pyqtSignal()
-  sigFont = pyqtSignal(object)
+  sigString = Signal(str)
+  sigClear = Signal()
+  sigUpdateMaster = Signal()
+  sigFont = Signal(object)
 
   def __init__(self, parent=None):
     QWidget.__init__(self, parent)
@@ -290,7 +289,7 @@ class ZhuMessageBox(QMessageBox):
     return result
 
 class ZhuNoteTree(QTreeWidget):
-  sigViewItem = pyqtSignal(object)
+  sigViewItem = Signal(object)
   def __init__(self):
     QTreeWidget.__init__(self)
     self.setColumnCount(2)
