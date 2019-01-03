@@ -19,15 +19,6 @@ import os
 import argparse
 from pathlib import Path
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-p", "--path", type=str, help='path to notes')
-    args = parser.parse_args()
-    path = args.path
-
-    app = QApplication([])
-    note = ZhuNote(path=path)
-    QApplication.instance().exec_()
 
 class ZhuNote(QWidget):
     html_hi = '<html> <body> <p> HTML Viewer </p> </body> </html>'
@@ -50,7 +41,7 @@ class ZhuNote(QWidget):
         print('Working directory is', self.path)
 
     def initUi(self):
-        x, y, w, h = 20, 40, 1000, 1000
+        w, h = 1000, 1000
 
         self.find = ZhuNoteFind(self) # self as parent
         self.tree = ZhuNoteTree()
@@ -86,7 +77,7 @@ class ZhuNote(QWidget):
         #self.setGeometry(x, y, w, h)
         #self.move(x, y)
         self.resize(w, h)
-        self.show()
+        #self.show()
         #self.tree.show()
         #self.form.show()
 
@@ -188,6 +179,7 @@ class ZhuNote(QWidget):
         print('Merged file is', self.fn_master)
         print('Number of entries new =', len(self.dod))
 
+
 class ZhuNoteFind(QWidget):
     sigString = Signal(str)
     sigClear = Signal()
@@ -263,6 +255,7 @@ class ZhuNoteFind(QWidget):
         msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
         msg.exec_()
 
+
 class ZhuMessageBox(QMessageBox):
     """Extend QMessageBox to allow resize """
     def __init__(self):
@@ -287,6 +280,7 @@ class ZhuMessageBox(QMessageBox):
             textEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         return result
+
 
 class ZhuNoteTree(QTreeWidget):
     sigViewItem = Signal(object)
@@ -323,6 +317,7 @@ class ZhuNoteTree(QTreeWidget):
             item.setFont(0, self.font)
             item.setFont(1, self.font)
             iterator += 1
+
 
 class ZhuNoteForm(QWidget):
     def __init__(self, path=None):
@@ -504,6 +499,19 @@ class ZhuNoteForm(QWidget):
             f.write(textSum)
         with open(pklfn, 'wb') as f :
             pickle.dump(dictNote, f, -1)
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-p", "--path", type=str, help='path to notes')
+    args = parser.parse_args()
+    path = args.path
+
+    app = QApplication([])
+    gui = ZhuNote(path=path)
+    gui.show()
+    app.exec_()
+
 
 if __name__ == '__main__':
     main()
