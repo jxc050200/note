@@ -9,7 +9,7 @@ __version__ = '0.2.0'
 from qtpy.QtWebEngineWidgets import QWebEngineView
 from qtpy.QtCore import Qt, QUrl, Signal
 from qtpy.QtGui import QFont
-from qtpy.QtWidgets import (QWidget, QMessageBox, QTreeWidget, QApplication,
+from qtpy.QtWidgets import (QWidget, QDesktopWidget, QMessageBox, QTreeWidget, QApplication,
     QSplitter, QVBoxLayout, QStyleFactory, QAction, QLabel, QTextEdit,
     QLineEdit, QPushButton, QHBoxLayout, QFontDialog, QSizePolicy,
     QTreeWidgetItem, QTreeWidgetItemIterator, QGridLayout)
@@ -75,9 +75,17 @@ class ZhuNote(QWidget):
         #self.setGeometry(x, y, w, h)
         #self.move(x, y)
         self.resize(w, h)
+        self.center()
         #self.show()
         #self.tree.show()
         #self.form.show()
+        
+    def center(self):
+        
+        qr = self.frameGeometry()
+        cp = QDesktopWidget().availableGeometry().center()
+        qr.moveCenter(cp)
+        self.move(qr.topLeft())
 
         styleName = 'Cleanlooks' # QStyleFactory.keys()
         # ['Windows', 'Motif', 'CDE', 'Plastique', 'GTK+', 'Cleanlooks']
