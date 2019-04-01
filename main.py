@@ -358,32 +358,32 @@ class ZhuNoteForm(QWidget):
         # Save move hand from keyboard to mouse.
 
         grid = QGridLayout()
-        grid.setSpacing(5)
+        grid.setSpacing(10)
 
         row = 0
         grid.addWidget(pathLabel, row, 0)
-        grid.addWidget(self.pathEdit, row, 1)
+        grid.addWidget(self.pathEdit, row, 1, 1, 3)
         row += 1
         grid.addWidget(filenameLabel, row, 0)
         grid.addWidget(self.filenameEdit, row, 1)
-        row += 1
-        grid.addWidget(figureLabel, row, 0)
-        grid.addWidget(self.figureEdit, row, 1)
+        
+        grid.addWidget(figureLabel, row, 2)
+        grid.addWidget(self.figureEdit, row, 3)
         row += 1
         grid.addWidget(htmlLabel, row, 0)
         grid.addWidget(self.htmlEdit, row, 1)
-        row += 1
-        grid.addWidget(timeLabel, row, 0)
-        grid.addWidget(self.timeEdit, row, 1)
+        
+        grid.addWidget(timeLabel, row, 2)
+        grid.addWidget(self.timeEdit, row, 3)
         row += 1
         grid.addWidget(titleLabel, row, 0)
         grid.addWidget(self.titleEdit, row, 1)
-        row += 1
-        grid.addWidget(keywordLabel, row, 0)
-        grid.addWidget(self.keywordEdit, row, 1)
+        
+        grid.addWidget(keywordLabel, row, 2)
+        grid.addWidget(self.keywordEdit, row, 3)
         row += 1
         grid.addWidget(bodyLabel, row, 0)
-        grid.addWidget(self.bodyEdit, row, 1, 6, 1)
+        grid.addWidget(self.bodyEdit, row, 1, 1, 3)
         #grid.addWidget(btnSave, 11, 1)
 
         self.actOpen = QAction('Open', self)
