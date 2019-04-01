@@ -39,7 +39,7 @@ class ZhuNote(QWidget):
 
     def initUi(self):
         print('Initializing GUI...')
-        w, h = 1000, 1000
+        w, h = 800, 800
 
         self.find = ZhuNoteFind(self) # self as parent
         self.tree = ZhuNoteTree()
