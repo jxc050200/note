@@ -351,9 +351,11 @@ class ZhuNoteForm(QWidget):
         # If more than one keyword, delimit with comma.
         # Same for figure and html filenames.
 
-        #btnSave = QPushButton('Save')
-        #btnSave.setToolTip('Save script to file')
-        #btnSave.clicked.connect(self.saveFile)
+        btnSave = QPushButton('Save')
+        btnSave.setToolTip('Save script to file')
+        btnSave.clicked.connect(self.saveFile)
+        btnCancel = QPushButton('Cancel')
+        btnCancel.clicked.connect(self.closeAllWindows)
         # Replace save button with keyboard shortcut
         # Save move hand from keyboard to mouse.
 
@@ -384,7 +386,8 @@ class ZhuNoteForm(QWidget):
         row += 1
         grid.addWidget(bodyLabel, row, 0)
         grid.addWidget(self.bodyEdit, row, 1, 1, 3)
-        #grid.addWidget(btnSave, 11, 1)
+        grid.addWidget(btnSave, 5, 1)
+        grid.addWidget(btnCancel, 5, 3) 
 
         self.actOpen = QAction('Open', self)
         self.actOpen.setShortcut('Ctrl+O')
@@ -502,6 +505,11 @@ class ZhuNoteForm(QWidget):
             f.write(textSum)
         with open(pklfn, 'wb') as f :
             pickle.dump(dictNote, f, -1)
+            
+    def closeAllWindows(self):
+        app = QApplication.instance()
+        app.closeAllWindows()  
+
 
 
 def main():
