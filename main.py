@@ -46,7 +46,7 @@ class ZhuNote(QWidget):
         self.form = ZhuNoteForm(self.path)
         self.wbrs = QWebEngineView()
 
-        splitter1 = QSplitter(Qt.Horizontal)
+        splitter1 = QSplitter(Qt.Vertical)
         splitter1.addWidget(self.form)
         splitter1.addWidget(self.wbrs)
         splitter1.setSizes([w/2, w/2])
